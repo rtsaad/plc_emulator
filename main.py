@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 from asyncio.windows_events import ProactorEventLoop
 import time
 import argparse
