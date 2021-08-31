@@ -93,8 +93,8 @@ class Plc(Process):
         super(Plc, self).__init__() 
         self.opc_conn = opc_server
         self.scan_cicle = scan_cicle        
-        self.TON_1 = 10
-        self.TON_2 = 10
+        self.TON_1 = 9.5
+        self.TON_2 = 9.5
         self.reset('TON_1')
         self.reset('TON_2')
         self.log_queue = log_queue

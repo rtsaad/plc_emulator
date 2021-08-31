@@ -159,7 +159,7 @@ class OpcUAServer(Process):
                     await obj.write_value(output)                
                 opc_conn.update(opc_gateway.write_batch(write, opc_conn))
                 #logging.info("Opc write variables")
-                await sleep(0.3)
+                await sleep(0.01)
                     
         await server.close_server()
         server = None
