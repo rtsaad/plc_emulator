@@ -89,18 +89,20 @@ def analog_to_bool(value, level_h, threshould):
 
 class Plc(Process): 
 
-    def  __init__(self, scan_cicle, opc_server, log_queue, barrier: Barrier, end_event: Event):
+    def  __init__(self, scan_cicle, opc_server, log_queue, barrier: Barrier, end_event: Event, failure=False, reset_tag=False):
         super(Plc, self).__init__() 
         self.opc_conn = opc_server
         self.scan_cicle = scan_cicle        
-        self.TON_1 = 9.5
-        self.TON_2 = 9.5
+        self.TON_1 = 10
+        self.TON_2 = 10
         self.reset('TON_1')
         self.reset('TON_2')
         self.log_queue = log_queue
         self.end_event: Event = end_event
         self.barrier: Barrier = barrier
-        print("-----PLC Created")
+        self.failure: bool    = failure
+        self.reset_tag: bool  = reset_tag
+        print(F"-----PLC Created{': Safe Failure mode ' if self.failure else ''}")
 
     def log(self, level, msg):
         self.log_queue.put((level, 'PLC', msg))
@@ -144,9 +146,13 @@ class Plc(Process):
 
         # Init special variables
         OUTPUT_1 = False
+        OUTPUT_1_new = False
         OUTPUT_2 = False
+        OUTPUT_2_new = False
         OUTPUT_3 = False
+        OUTPUT_3_new = False
         OUTPUT_4 = False
+        OUTPUT_4_new = False
 
         self.barrier.wait()
 
@@ -255,34 +261,42 @@ class Plc(Process):
             state_vote_1oo7_INPUT_001_007 = self.TON_2_Q and state_vote_1oo7_INPUT_001_007_ON
             
             # Rung 1
-            OUTPUT_1_new = state_vote_2oo7_INPUT_001_007 or (state_vote_1oo7_INPUT_001_007 and INPUT_008_L) or \
-                state_vote_2oo5_INPUT_009_013 or state_vote_2oo10_INPUT_014_023 or state_vote_2oo4_INPUT_024_027
+            if self.failure:
+                # Força uma dangerous failure nas votações com and
+                OUTPUT_1_new = (state_vote_2oo7_INPUT_001_007 or (state_vote_1oo7_INPUT_001_007 and INPUT_008_L and False) or \
+                    state_vote_2oo10_INPUT_014_023 or state_vote_2oo4_INPUT_024_027)
+            else:
+                OUTPUT_1_new = state_vote_2oo7_INPUT_001_007 or (state_vote_1oo7_INPUT_001_007 and INPUT_008_L) or \
+                    state_vote_2oo5_INPUT_009_013 or state_vote_2oo10_INPUT_014_023 or state_vote_2oo4_INPUT_024_027
             if OUTPUT_1_new != OUTPUT_1:
                 self.log(5, F'----PLC:: PLC OUTPUT1 TAG value change from {OUTPUT_1} to {OUTPUT_1_new}')
             OUTPUT_1 = OUTPUT_1_new
            
 
             # Rung 3
-            #if INPUT_028_CMZ==1:
-            #    # Force Reset
-            #    OUTPUT_2 = False
-            #else:
-            #    OUTPUT_2 = (OUTPUT_2 or (state_vote_2oo7_INPUT_001_007 or state_vote_1oo7_INPUT_001_007 or INPUT_008_L))
-            # Removed reset variable
-            OUTPUT_2_new = ((state_vote_2oo7_INPUT_001_007 or state_vote_1oo7_INPUT_001_007 or INPUT_008_L))
+            if INPUT_028_CMZ==1 and self.reset_tag:
+                # Force Reset
+                OUTPUT_2_new = False
+            else:
+                OUTPUT_2_new = (OUTPUT_2 or (state_vote_2oo7_INPUT_001_007 or state_vote_1oo7_INPUT_001_007 or INPUT_008_L))
+            
+            #OUTPUT_2_new = ((state_vote_2oo7_INPUT_001_007 or state_vote_1oo7_INPUT_001_007 or INPUT_008_L))
             if OUTPUT_2_new != OUTPUT_2:
                 self.log(5, F'----PLC:: PLC OUTPUT2 TAG value change from {OUTPUT_2} to {OUTPUT_2_new}')
             OUTPUT_2 = OUTPUT_2_new
             
-            # Rung 4
-            OUTPUT_3_new = state_vote_2oo5_INPUT_009_013 or state_vote_2oo10_INPUT_014_023 or state_vote_2oo4_INPUT_024_027
+            # Rung 4            
+            if self.failure:
+                OUTPUT_3_new = (state_vote_1oo7_INPUT_001_007 or state_vote_2oo5_INPUT_009_013 or state_vote_2oo10_INPUT_014_023 or state_vote_2oo7_INPUT_001_007_ON)
+            else:
+                OUTPUT_3_new = state_vote_2oo5_INPUT_009_013 or state_vote_2oo10_INPUT_014_023 or state_vote_2oo4_INPUT_024_027
             if OUTPUT_3_new != OUTPUT_3:
                 self.log(5, F'----PLC:: PLC OUTPUT3 TAG value change from {OUTPUT_3} to {OUTPUT_3_new}')
             OUTPUT_3 = OUTPUT_3_new
 
             # Rung 5
-            OUTPUT_4_new = state_vote_2oo7_INPUT_001_007 or (state_vote_1oo7_INPUT_001_007 and INPUT_008_L) or \
-                state_vote_2oo5_INPUT_009_013 or state_vote_2oo10_INPUT_014_023 or state_vote_2oo4_INPUT_024_027
+            OUTPUT_4_new = (state_vote_2oo7_INPUT_001_007 or (state_vote_1oo7_INPUT_001_007 and INPUT_008_L) or \
+                state_vote_2oo5_INPUT_009_013 or state_vote_2oo10_INPUT_014_023 or state_vote_2oo4_INPUT_024_027)
             if OUTPUT_4_new != OUTPUT_4:
                 self.log(5, F'----PLC:: PLC OUTPUT4 TAG value change from {OUTPUT_4} to {OUTPUT_4_new}')
             OUTPUT_4 = OUTPUT_4_new

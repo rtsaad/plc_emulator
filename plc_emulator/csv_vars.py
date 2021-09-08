@@ -1,3 +1,4 @@
+from plc_emulator.resource_path import resource_path
 import random
 import csv
 
@@ -11,7 +12,7 @@ class OpcCsv:
     filename = ''
 
     def  __init__(self):
-        self.filename = 'plc_emulator/opc_variables'
+        self.filename = 'plc_emulator/opc_variables.csv'
         self.read_csv()
 
     def set_level(self, level, threshould):
@@ -63,7 +64,7 @@ class OpcCsv:
     def read_csv(self):
         # CSV Template
         # sufix, name, type, [min, max, L, threshould_L, H, threshould_H]
-        with open(self.filename + '.csv') as csvfile:
+        with open(resource_path(self.filename)) as csvfile:
             csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
             for row in csvreader:
                 if len(row) == 0 or row[0] == '#':

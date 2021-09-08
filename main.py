@@ -13,6 +13,7 @@ from plc_emulator.csv_vars import OpcCsv
 from plc_emulator.opc_gateway import OpcGateway
 from plc_emulator.plc import Plc
 from plc_emulator.logger import Logger 
+from multiprocessing import freeze_support
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 
@@ -44,6 +45,8 @@ def main():
         port                = PORT
         namespace           = NAMESPACE
         server_name         = SERVERNAME
+        failure             = False
+        reset_tag           = True
 
     else:
         parser = argparse.ArgumentParser()
@@ -54,6 +57,8 @@ def main():
         parser.add_argument('-p', '--port', help='Server port', default=PORT)
         parser.add_argument('-ns', '--namespace', help='Node namespace to registers', default=NAMESPACE)
         parser.add_argument('-sn', '--servername', help='Server name', default=SERVERNAME)
+        parser.add_argument('-df', '--failure', help='PLC emulation with errors (dangerous failures and safe failures)', default=False)
+        parser.add_argument('-rt', '--reset_tag', help='Logic Output 2 with reset tag configured', default=False)
         args = parser.parse_args()
         verbose_value = VERBOSE
         if(args.verbose):
@@ -64,6 +69,7 @@ def main():
         port                = args.port
         namespace           = args.namespace
         server_name         = args.servername
+        failure             = args.failure 
 
 
     # Start Process
@@ -88,7 +94,7 @@ def main():
             opcua.start()
 
             # Process to emulate the sis (pcl)
-            sis = Plc(scan_cycle_value, opc_conn, log_channel, barrier, end_event)
+            sis = Plc(scan_cycle_value, opc_conn, log_channel, barrier, end_event, failure=failure, reset_tag=reset_tag)
             sis.start()                 
 
             # Never stops, must be halted by the user.
@@ -104,4 +110,5 @@ def main():
 
 
 if __name__ == "__main__":
+    freeze_support()
     main()
