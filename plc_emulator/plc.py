@@ -280,7 +280,7 @@ class Plc(Process):
             else:
                 OUTPUT_2_new = (OUTPUT_2 or (state_vote_2oo7_INPUT_001_007 or state_vote_1oo7_INPUT_001_007 or INPUT_008_L))
             
-            #OUTPUT_2_new = ((state_vote_2oo7_INPUT_001_007 or state_vote_1oo7_INPUT_001_007 or INPUT_008_L))
+            OUTPUT_2_new = ((state_vote_2oo7_INPUT_001_007 or state_vote_1oo7_INPUT_001_007 or INPUT_008_L))
             if OUTPUT_2_new != OUTPUT_2:
                 self.log(5, F'----PLC:: PLC OUTPUT2 TAG value change from {OUTPUT_2} to {OUTPUT_2_new}')
             OUTPUT_2 = OUTPUT_2_new

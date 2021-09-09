@@ -70,6 +70,7 @@ def main():
         namespace           = args.namespace
         server_name         = args.servername
         failure             = args.failure 
+        reset_tag           = args.reset_tag
 
 
     # Start Process
