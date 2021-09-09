@@ -22,7 +22,7 @@ def _set_endpoint(endpoint, port):
 
 # Constants
 # Ignore command line arguments to set the values directly here
-IGNORE_COMMAND_ARGUMENTS = True
+IGNORE_COMMAND_ARGUMENTS = False
 # Default values
 PERIODIC_TIME = 0.125
 PLC_SCAN_CYCLE = 0.050
